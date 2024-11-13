@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  minio:
+    image: minio/minio:latest
+    networks:
+      - minio_network
+    ports:
+      - 127.0.0.1:9000:9000
+      - 127.0.0.1:9001:9001
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123456
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio-backup:/data
+
+
+  minio-client:
+    image: minio/mc:latest
+    networks:
+      - minio_network
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add local http://minio:9000 minioadmin minioadmin123456;
+      tail -f /dev/null
+      "
+
+networks:
+  minio_network:
+    driver: bridge
